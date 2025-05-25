@@ -67,7 +67,9 @@ void loadConfig() {
   EEPROM.get(0, config);
 
   // If EEPROM is empty, set default values
-  if (strlen(config.ssid) == 0) {
+  //if (strlen(config.ssid) == 0) {
+  if (true) {
+
     strcpy(config.ssid, APSSID);
     strcpy(config.password, APPSK);
     strcpy(config.otaServer, OTA_SERVER);

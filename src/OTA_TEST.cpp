@@ -30,7 +30,7 @@ void ensureWiFiConnection() {
     Serial.println("Connecting to WiFi...");
     delay(1000);
   }
-  Serial.println("WiFi connected!");
+  Serial.printf("WiFi connected! IP address: %s\n", WiFi.localIP().toString().c_str());
 }
 
 /**
@@ -42,13 +42,13 @@ void ensureWiFiConnection() {
 void indicateUpdateStatus(t_httpUpdate_return ret) {
   switch (ret) {
     case HTTP_UPDATE_FAILED:
-      digitalWrite(LED_BUILTIN, HIGH); // Fehler: LED dauerhaft an
+      digitalWrite(LED_BUILTIN, HIGH); // Error: LED stays on
       break;
     case HTTP_UPDATE_NO_UPDATES:
-      digitalWrite(LED_BUILTIN, LOW); // Keine Updates: LED aus
+      digitalWrite(LED_BUILTIN, LOW); // No updates: LED off
       break;
     case HTTP_UPDATE_OK:
-      for (int i = 0; i < 5; i++) { // Erfolg: LED blinkt 5-mal
+      for (int i = 0; i < 5; i++) { // Success: LED blinks 5 times
         digitalWrite(LED_BUILTIN, HIGH);
         delay(200);
         digitalWrite(LED_BUILTIN, LOW);
@@ -64,20 +64,23 @@ void indicateUpdateStatus(t_httpUpdate_return ret) {
  * Retries for up to 30 seconds if the update fails.
  */
 void performOTAUpdate() {
+  // Baue den Pfad für die Firmware-Datei
   sprintf(path, "%s:%d%s%s", OTA_SERVER, OTA_PORT, UPDATE_PATH, FIRMWARE_NAME);
   Serial.printf("Starting OTA update from: %s\n", path);
 
-  // Check firmware version before updating
-  HTTPClient http;
-  sprintf(buf, "%s:%d%s%s.version", OTA_SERVER, OTA_PORT, UPDATE_PATH, FIRMWARE_NAME);
+  // Baue den Pfad für die Versionsabfrage: /version/:filename
+  sprintf(buf, "%s:%d/version/%s", OTA_SERVER, OTA_PORT, FIRMWARE_NAME);
   Serial.printf("Checking firmware version from: %s\n", buf);
 
+  HTTPClient http;
   if (http.begin(client, buf)) {
     int httpCode = http.GET();
+    Serial.printf("HTTP response code: %d\n", httpCode);
     if (httpCode == HTTP_CODE_OK) {
       String newVersion = http.getString();
+      newVersion.trim(); // Entfernt evtl. \n oder Leerzeichen
       Serial.printf("Available firmware version: %s\n", newVersion.c_str());
-      if (newVersion == FIRMWARE_VERSION) {
+      if (newVersion == CURRENT_VERSION) {
         Serial.println("Firmware is already up-to-date.");
         http.end();
         return;
@@ -123,18 +126,18 @@ void setup() {
   WiFi.begin(config.ssid, config.password);
 
   Serial.print(F("Firmware version "));
-  Serial.println(FIRMWARE_VERSION);
-  delay(2000);
-
+  Serial.println(CURRENT_VERSION);
   startWebServer(); // Start the web server
 }
-
+  startWebServer(); // Start the web server
 /**
  * Main loop that ensures WiFi connection, handles the web server,
  * and performs OTA updates.
- */
-void loop() {
+ */Main loop that ensures WiFi connection, handles the web server,
+void loop() {ms OTA updates.
   ensureWiFiConnection();
   handleWebServer(); // Handle web server requests
+  performOTAUpdate();n();
+} handleWebServer(); // Handle web server requests
   performOTAUpdate();
 }
