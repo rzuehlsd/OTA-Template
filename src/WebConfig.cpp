@@ -1,19 +1,53 @@
+/**
+ * WebConfig.cpp
+ * 
+ * This file provides all functions for handling configuration data,
+ * web server endpoints, and EEPROM storage for ESP8266 projects.
+ * It enables configuration of WiFi, OTA server, and update interval
+ * via a web interface and ensures persistent storage in EEPROM.
+ * 
+ * How to extend for user-defined configuration:
+ * ----------------------------------------------------------------------------
+ * 1. Extend the Config struct (in config.h) with your own variables.
+ * 2. Add new input fields to the HTML form in WebForm.h and handle them in handleSet():
+ *    - Read the new value from the web form using server.arg("yourField").
+ *    - Store it in the config struct.
+ * 3. Update loadConfig() to set default values for your new fields if needed.
+ * 4. Display your new configuration values in the web form as required.
+ * 
+ * Example: To add a "deviceName" field:
+ *   - Add `char deviceName[32];` to Config in config.h.
+ *   - Add an input field for "deviceName" in WebForm.h.
+ *   - In handleSet(), add: server.arg("deviceName").toCharArray(config.deviceName, sizeof(config.deviceName));
+ *   - In loadConfig(), set a default if EEPROM is empty.
+ *   - Show the value in the HTML form.
+ */
+
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include "WebConfig.h"
 #include "config.h"
-#include "WebForm.h"  // <-- WebForm einbinden
+#include "WebForm.h"  // HTML-Formular für die Weboberfläche
 
 ESP8266WebServer server(80);
-Config config; // Use the declaration from the header file
+Config config; // Globale Konfigurationsstruktur
 
-// Handle root page
+/**
+ * handleRoot()
+ * Wird aufgerufen, wenn die Root-Seite ("/") im Browser geöffnet wird.
+ * Sendet das HTML-Konfigurationsformular an den Client.
+ */
 void handleRoot() {
   server.send(200, "text/html", htmlForm());
 }
 
-// Handle form submission
+/**
+ * handleSet()
+ * Wird aufgerufen, wenn das Konfigurationsformular abgeschickt wird (POST auf "/set").
+ * Liest die Formulardaten aus, speichert sie in der Config-Struktur und schreibt sie ins EEPROM.
+ * Erkennt, ob ein Neustart gewünscht ist, und startet ggf. das Gerät neu.
+ */
 void handleSet() {
   String ssid = server.arg("ssid");
   String password = server.arg("password");
@@ -22,7 +56,7 @@ void handleSet() {
   String otaEnabled = server.arg("otaEnabled");
   String otaUpdateInterval = server.arg("otaUpdateInterval");
 
-  // Save values to config struct
+  // Werte in die Config-Struktur übernehmen
   ssid.toCharArray(config.ssid, sizeof(config.ssid));
   password.toCharArray(config.password, sizeof(config.password));
   otaServer.toCharArray(config.otaServer, sizeof(config.otaServer));
@@ -30,15 +64,30 @@ void handleSet() {
   config.otaEnabled = (otaEnabled == "1");
   config.otaUpdateInterval = otaUpdateInterval.toInt();
 
-  // Write config to EEPROM
+  // Konfiguration ins EEPROM schreiben
   EEPROM.begin(EEPROM_START);
   EEPROM.put(0, config);
   EEPROM.commit();
 
   Serial.println("Configuration saved to EEPROM.");
+
+  // Prüfen, ob ein Neustart gewünscht ist
+  if (server.hasArg("restart") && server.arg("restart") == "1") {
+    server.send(200, "text/plain", "Configuration saved. Restarting...");
+    delay(500);
+    ESP.restart();
+    return;
+  }
+
   server.send(200, "text/plain", "Configuration saved. Restart the device.");
 }
 
+/**
+ * loadConfig()
+ * Lädt die Konfiguration aus dem EEPROM in die globale Config-Struktur.
+ * Falls keine gültigen Daten vorhanden sind, werden Standardwerte gesetzt.
+ * Gibt die geladenen Werte auf der seriellen Schnittstelle aus.
+ */
 void loadConfig() {
   EEPROM.begin(EEPROM_START);
   EEPROM.get(0, config);
@@ -64,6 +113,11 @@ void loadConfig() {
   Serial.printf("OTA Enabled: %s\n", config.otaEnabled ? "true" : "false");
 }
 
+/**
+ * startWebServer()
+ * Initialisiert den Webserver, registriert die Handler für die Root-Seite und das Setzen der Konfiguration.
+ * Startet den Webserver.
+ */
 void startWebServer() {
   server.on("/", handleRoot);
   server.on("/set", HTTP_POST, handleSet);
@@ -71,12 +125,11 @@ void startWebServer() {
   Serial.println("Web server started.");
 }
 
+/**
+ * handleWebServer()
+ * Muss regelmäßig in der loop()-Funktion aufgerufen werden.
+ * Bearbeitet eingehende HTTP-Anfragen.
+ */
 void handleWebServer() {
   server.handleClient();
-  if (server.hasArg("restart") && server.arg("restart") == "1") {
-    server.send(200, "text/plain", "Configuration saved. Restarting...");
-    delay(500);
-    ESP.restart();
-    return;
-  }
 }

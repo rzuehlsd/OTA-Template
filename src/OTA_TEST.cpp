@@ -1,12 +1,49 @@
-/* ESP8266 Basic Sketch for automatic update of firmware at start */
+/* OTA_TEST - Automatic Firmware Update for ESP8266 with Web Configuration
+ * ----------------------------------------------------------------------------
+ * This program enables an ESP8266 to automatically update its firmware
+ * as soon as a newer version is available on an OTA server.
+ * 
+ * Main features:
+ * - On startup, the saved configuration is loaded from EEPROM.
+ * - The ESP8266 connects to the configured WiFi network.
+ * - A web interface (integrated web server) allows configuration
+ *   (WiFi, OTA server, update interval, etc.) to be conveniently changed in the browser.
+ * - At regular intervals, the device checks if a new firmware version
+ *   is available on the OTA server. If a new version is available, the
+ *   update is performed automatically.
+ * - The update status is indicated via the internal LED.
+ * 
+ * Web Configuration:
+ * ----------------------------------------------------------------------------
+ * Configuration is done via a user-friendly web page provided by the ESP8266 itself.
+ * After startup, the device can be accessed in the browser via its IP address.
+ * The following settings can be made there:
+ *   - WiFi SSID and key
+ *   - OTA server address and port
+ *   - Enable/disable OTA service
+ *   - Update interval (in minutes)
+ *   - Firmware information is displayed
+ *   - Changes can be saved and the device restarted directly
+ * 
+ * After saving, the settings are stored in EEPROM and automatically loaded on the next start.
+ * 
+ * User Extensions:
+ * ----------------------------------------------------------------------------
+ * To extend the program with your own functionality, implement your code in the
+ * userSetup() and userLoop() functions below. These functions are called automatically:
+ *   - userSetup(): Called once during startup after OTA and web configuration setup.
+ *   - userLoop():  Called in every main loop iteration after OTA and web server handling.
+ * 
+ * Place your own constants, pin definitions, and global variables at the top of this file,
+ * above the userSetup() and userLoop() functions, or in a separate header file if preferred.
+ * 
+ * Author: R. Zuehlsdorff, 2025
+ */
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-#include <ESP8266httpUpdate.h>
-#include <EEPROM.h>
 #include "config.h"
 #include "WebConfig.h"
+#include "OTA_Template.h"
 
 #define DEBUG true
 
@@ -19,133 +56,37 @@
 WiFiClient client;
 
 /**
- * Ensures the ESP8266 is connected to WiFi.
- * Retries until a connection is established.
+ * Dummy setup function for custom initializations.
+ * You can add your own initialization or startup conditions here.
  */
-void ensureWiFiConnection() {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.print("Connecting to WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(1000);
-      Serial.print(".");
-    }
-    Serial.println();
-    Serial.println("Connected to WiFi");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-  }
+void userSetup() {
+  // TODO: Insert your own initialization code here
 }
 
 /**
- * Indicates the status of the OTA update using the built-in LED.
- * - LED on: Update failed
- * - LED off: No updates available
- * - LED blinks: Update successful
+ * Dummy loop function for custom cyclic tasks.
+ * This function is called in every loop() iteration.
  */
-void indicateUpdateStatus(t_httpUpdate_return ret) {
-  switch (ret) {
-    case HTTP_UPDATE_FAILED:
-      digitalWrite(LED_BUILTIN, HIGH); // Error: LED stays on
-      Serial.println("OTA Update failed!");
-      break;
-    case HTTP_UPDATE_NO_UPDATES:
-      digitalWrite(LED_BUILTIN, LOW); // No updates: LED off
-      Serial.println("No OTA Update available!");
-      break;
-    case HTTP_UPDATE_OK:
-      Serial.println("OTA Update completed!");
-      for (int i = 0; i < 5; i++) { // Success: LED blinks 5 times
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(200);
-        digitalWrite(LED_BUILTIN, LOW);
-        delay(200);
-      }
-      break;
-  }
-}
-
-/**
- * Performs an OTA update by connecting to the specified server.
- * Checks if the firmware version matches before updating.
- * Retries for up to 30 seconds if the update fails.
- */
-void performOTAUpdate() {
-  char path[128];
-  char buf[128];
-  sprintf(path, "http://%s:%d/updates/%s", config.otaServer, config.otaPort, FIRMWARE_NAME);
-  sprintf(buf, "http://%s:%d/version/%s.version", config.otaServer, config.otaPort, FIRMWARE_NAME);
-
-  Serial.printf("Starting OTA update from: %s\n", path);
-  Serial.printf("Checking firmware version from: %s\n", buf);
-
-  HTTPClient http;
-  if (http.begin(client, buf)) {
-    int httpCode = http.GET();
-    Serial.printf("HTTP response code: %d\n", httpCode);
-    if (httpCode == HTTP_CODE_OK) {
-      String newVersion = http.getString();
-      newVersion.trim();
-      Serial.printf("Available firmware version: %s\n", newVersion.c_str());
-      if (newVersion == CURRENT_VERSION) {
-        Serial.println("Firmware is already up-to-date.");
-        http.end();
-        return;
-      }
-    } else {
-      Serial.printf("Failed to check firmware version, HTTP code: %d\n", httpCode);
-    }
-    http.end();
-  } else {
-    Serial.println("Failed to connect to version check URL.");
-  }
-
-  Serial.println("Starting OTA update...");
-  unsigned long startTime = millis();
-  while (millis() - startTime < 30000) {
-    t_httpUpdate_return ret = ESPhttpUpdate.update(client, path);
-    indicateUpdateStatus(ret);
-    if (ret == HTTP_UPDATE_OK) {
-      break;
-    }
-  }
+void userLoop() {
+  // TODO: Insert your own cyclic tasks here
 }
 
 /**
  * Sets up the ESP8266 by initializing serial communication,
- * loading configuration from EEPROM, connecting to WiFi,
- * starting the web server, and printing the firmware version.
+ * then calls OTA and user setup functions.
  */
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  loadConfig(); // Konfiguration aus EEPROM laden
-  Serial.println("READY - Connecting to WiFi ..");
-
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(config.ssid, config.password);
-
-  ensureWiFiConnection();
-
-  Serial.print(F("Firmware version "));
-  Serial.println(CURRENT_VERSION);
-
-  startWebServer(); // Web-Konfiguration starten
+  otaSetup();   // OTA-related initialization (now in OTA_Template.cpp)
+  userSetup();  // Custom initialization
 }
 
 /**
- * Main loop that ensures WiFi connection, handles the web server,
- * and performs OTA updates.
+ * Main loop that handles OTA logic and user-defined cyclic tasks.
  */
 void loop() {
-  ensureWiFiConnection();
-  handleWebServer(); // Webserver Anfragen bearbeiten
-  if(config.otaEnabled) {
-    // Check for OTA updates every 10 minutes
-    static unsigned long lastUpdateCheck = 0;
-    if (millis() - lastUpdateCheck > config.otaUpdateInterval * 60000) { // Convert minutes to milliseconds
-      performOTAUpdate();
-      lastUpdateCheck = millis();
-    }
-  }
+  otaLoop();    // OTA-related tasks (now in OTA_Template.cpp)
+  userLoop();   // Custom cyclic tasks
 }

@@ -15,13 +15,13 @@ inline String htmlForm() {
   form += R"rawliteral(</title>
   <style>
     body {
-      background-color: #e6f2ff;
+      background-color: #f0f0f0; /* lightgrey */
       font-family: Arial, sans-serif;
     }
     .form-frame {
       border: 3px solid #003366;
       border-radius: 10px;
-      background: #ffffff;
+      background: #e6f2ff; /* lightblue */
       max-width: 500px;
       margin: 40px auto;
       padding: 24px 32px 16px 32px;
@@ -128,7 +128,7 @@ inline String htmlForm() {
       </table>
     </form>
     <div style="text-align:center; margin-top:20px;">
-      <span style="font-size:small; color:#666;">&copy; 2024 R. Zuehlsdorff</span>
+      <span style="font-size:small; color:#666;">&copy; 2025 R. Zuehlsdorff</span>
     </div>
   </div>
 </body>
