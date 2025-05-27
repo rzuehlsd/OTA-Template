@@ -1,3 +1,20 @@
+/**
+ * WebForm.h
+ *
+ * Dieses File stellt das HTML-Formular für die webbasierte Konfiguration des OTA Template Projekts bereit.
+ * Die Funktion htmlForm() erzeugt und liefert die komplette HTML-Seite als String, inklusive aller
+ * Eingabefelder für WLAN, OTA-Server, Firmware-Informationen und Steuer-Buttons.
+ *
+ * Die Seite enthält:
+ *   - Anzeige von APPNAME und einer Beschreibung (DESCRIPTION)
+ *   - Eingabefelder für SSID, Passwort, OTA-Server, Port, OTA-Status und Update-Intervall
+ *   - Anzeige von Firmware-Name und -Version
+ *   - Buttons zum Speichern/Neustarten und zum Zurücksetzen auf Werkseinstellungen
+ *   - Responsive und moderne Gestaltung per CSS
+ *
+ * Änderungen an diesem File wirken sich direkt auf die Weboberfläche des Geräts aus.
+ */
+
 #ifndef WEBFORM_H
 #define WEBFORM_H
 
@@ -10,6 +27,7 @@ inline String htmlForm() {
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>)rawliteral";
   form += String(APPNAME);
   form += R"rawliteral(</title>
@@ -54,7 +72,28 @@ inline String htmlForm() {
     button[type="submit"]:hover {
       background-color: #1769aa;
     }
+    button[type="button"].reset-btn {
+      background-color: #f44336;
+      color: white;
+      margin-right: 10px;
+    }
+    button[type="button"].reset-btn:hover {
+      background-color: #b71c1c;
+    }
   </style>
+  <script>
+    function resetDefaults() {
+      if(confirm('Reset all settings to default values?')) {
+        var form = document.forms[0];
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'resetDefaults';
+        input.value = '1';
+        form.appendChild(input);
+        form.submit();
+      }
+    }
+  </script>
 </head>
 <body>
   <div class="form-frame">
@@ -62,6 +101,22 @@ inline String htmlForm() {
     <h1 style="text-align:center; color:#003366; font-size:1.5em; margin-top:-10px; margin-bottom:24px;">)rawliteral";
   form += String(APPNAME);
   form += R"rawliteral(</h1>
+    <div style="text-align:center; margin-bottom:20px;">
+      <textarea readonly 
+        style="width:100%;text-align:center;
+               background:#fff;
+               border:1px solid #bbb;
+               color:#444;
+               font-size:0.95em;
+               font-family: inherit;
+               padding:6px 8px;
+               border-radius:6px;
+               resize:none;"
+        rows="3"
+        >)rawliteral";
+  form += String(DESCRIPTION);
+  form += R"rawliteral(</textarea>
+    </div>
     <form action="/set" method="POST">
       <table>
         <tr>
@@ -97,7 +152,7 @@ inline String htmlForm() {
         <tr>
           <td class="label">Firmware Version:</td>
           <td class="input"><b>)rawliteral";
-  form += String(CURRENT_VERSION);
+  form += String(config.version);
   form += R"rawliteral(</b></td>
         </tr>
         <tr>
@@ -122,7 +177,16 @@ inline String htmlForm() {
         <tr>
           <td></td>
           <td>
-            <button type="submit" name="restart" value="1">Save and Restart</button>
+            <table style="width:100%; border:none; padding:0; margin:0;">
+              <tr>
+                <td style="padding:0; border:none; text-align:left;">
+                  <button type="button" style="background-color:#2196F3; color:white; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; margin-right:10px;" onclick="resetDefaults()">Reset to Defaults</button>
+                </td>
+                <td style="padding:0; border:none; text-align:right;">
+                  <button type="submit" name="restart" value="1" style="background-color:#4CAF50; color:white; border:none; border-radius:4px; padding:8px 16px; cursor:pointer;">Save and Restart</button>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>

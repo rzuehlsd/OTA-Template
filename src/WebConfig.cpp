@@ -1,26 +1,27 @@
 /**
  * WebConfig.cpp
- * 
- * This file provides all functions for handling configuration data,
- * web server endpoints, and EEPROM storage for ESP8266 projects.
- * It enables configuration of WiFi, OTA server, and update interval
- * via a web interface and ensures persistent storage in EEPROM.
- * 
- * How to extend for user-defined configuration:
+ *
+ * Dieses File enthält alle Funktionen zur Verwaltung der Konfigurationsdaten,
+ * zur Bereitstellung der Webserver-Endpunkte und zur Speicherung/Ladung der
+ * Einstellungen im EEPROM für ESP8266-Projekte.
+ *
+ * Über die Weboberfläche können WLAN-, OTA- und weitere Einstellungen
+ * komfortabel geändert und dauerhaft gespeichert werden.
+ *
+ * Hinweise zur Erweiterung für eigene Konfigurationsfelder:
  * ----------------------------------------------------------------------------
- * 1. Extend the Config struct (in config.h) with your own variables.
- * 2. Add new input fields to the HTML form in WebForm.h and handle them in handleSet():
- *    - Read the new value from the web form using server.arg("yourField").
- *    - Store it in the config struct.
- * 3. Update loadConfig() to set default values for your new fields if needed.
- * 4. Display your new configuration values in the web form as required.
- * 
- * Example: To add a "deviceName" field:
- *   - Add `char deviceName[32];` to Config in config.h.
- *   - Add an input field for "deviceName" in WebForm.h.
- *   - In handleSet(), add: server.arg("deviceName").toCharArray(config.deviceName, sizeof(config.deviceName));
- *   - In loadConfig(), set a default if EEPROM is empty.
- *   - Show the value in the HTML form.
+ * 1. Die Config-Struktur (in config.h) um eigene Variablen erweitern.
+ * 2. Neue Eingabefelder im HTML-Formular in WebForm.h ergänzen und in handleSet()
+ *    auslesen und in die Config-Struktur übernehmen.
+ * 3. In loadConfig() ggf. Standardwerte für neue Felder setzen.
+ * 4. Die neuen Werte im Formular anzeigen.
+ *
+ * Beispiel: Für ein neues Feld "deviceName":
+ *   - In config.h: char deviceName[32]; zur Config-Struktur hinzufügen.
+ *   - In WebForm.h: Eingabefeld für "deviceName" ergänzen.
+ *   - In handleSet(): server.arg("deviceName").toCharArray(config.deviceName, sizeof(config.deviceName));
+ *   - In loadConfig(): Standardwert setzen, falls EEPROM leer.
+ *   - Im Formular anzeigen.
  */
 
 #include <EEPROM.h>
@@ -49,6 +50,25 @@ void handleRoot() {
  * Erkennt, ob ein Neustart gewünscht ist, und startet ggf. das Gerät neu.
  */
 void handleSet() {
+  // Check for reset to defaults
+  if (server.hasArg("resetDefaults") && server.arg("resetDefaults") == "1") {
+    // Set all config fields to defaults
+    strcpy(config.ssid, APSSID);
+    strcpy(config.password, APPSK);
+    strcpy(config.otaServer, OTA_SERVER);
+    config.otaPort = OTA_PORT;
+    config.otaEnabled = OTA_ENABLED;
+    config.otaUpdateInterval = OTA_UPDATE_INTERVAL;
+    strcpy(config.version, INITIAL_VERSION); // Make sure INITIAL_VERSION is defined
+
+    // Save defaults to EEPROM using the helper function
+    saveConfigToEEPROM();
+
+    // Redisplay the form with default values
+    server.send(200, "text/html", htmlForm());
+    return;
+  }
+
   String ssid = server.arg("ssid");
   String password = server.arg("password");
   String otaServer = server.arg("otaServer");
@@ -65,9 +85,7 @@ void handleSet() {
   config.otaUpdateInterval = otaUpdateInterval.toInt();
 
   // Konfiguration ins EEPROM schreiben
-  EEPROM.begin(EEPROM_START);
-  EEPROM.put(0, config);
-  EEPROM.commit();
+  saveConfigToEEPROM();
 
   Serial.println("Configuration saved to EEPROM.");
 
@@ -83,14 +101,24 @@ void handleSet() {
 }
 
 /**
+ * readConfigFromEEPROM()
+ * Liest die Konfiguration aus dem EEPROM und gibt sie zurück.
+ */
+Config readConfigFromEEPROM() {
+  Config cfg;
+  EEPROM.begin(EEPROM_SIZE);
+  EEPROM.get(EEPROM_START, cfg);
+  return cfg;
+}
+
+/**
  * loadConfig()
  * Lädt die Konfiguration aus dem EEPROM in die globale Config-Struktur.
  * Falls keine gültigen Daten vorhanden sind, werden Standardwerte gesetzt.
  * Gibt die geladenen Werte auf der seriellen Schnittstelle aus.
  */
 void loadConfig() {
-  EEPROM.begin(EEPROM_START);
-  EEPROM.get(0, config);
+  config = readConfigFromEEPROM();
 
   // Prüfen, ob die SSID gültig ist (einfacher Check)
   if (config.ssid[0] == '\0' || config.ssid[0] == 0xFF) {
@@ -101,6 +129,7 @@ void loadConfig() {
     config.otaPort = OTA_PORT;
     config.otaEnabled = OTA_ENABLED; 
     config.otaUpdateInterval = OTA_UPDATE_INTERVAL;
+    strcpy(config.version, INITIAL_VERSION);
     Serial.println("EEPROM leer, Standardwerte geladen.");
   } else {
     Serial.println("Konfiguration aus EEPROM geladen.");
@@ -133,3 +162,10 @@ void startWebServer() {
 void handleWebServer() {
   server.handleClient();
 }
+
+void saveConfigToEEPROM() {
+  EEPROM.begin(EEPROM_SIZE);
+  EEPROM.put(EEPROM_START, config); // Use macro as the start address
+  EEPROM.commit();
+}
+

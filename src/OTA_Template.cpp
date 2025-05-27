@@ -1,33 +1,36 @@
 /**
  * OTA_Template.cpp
  * 
- * This file provides all core functions for:
- *  - Automatic OTA firmware update for ESP8266
- *  - WiFi connection management
- *  - Web configuration interface integration
+ * Dieses File enthält die zentralen Funktionen für:
+ *  - Automatische OTA-Firmware-Updates für ESP8266
+ *  - Verwaltung und Überwachung der WLAN-Verbindung
+ *  - Integration und Ablauf der webbasierten Konfigurationsoberfläche
  * 
- * Use otaSetup() in your setup() and otaLoop() in your loop() to enable
- * automatic firmware updates and web-based configuration in your project.
- * 
- * Configuration Handling:
+ * Verwendung:
  * ----------------------------------------------------------------------------
- * On startup, configuration data (WiFi, OTA server, update interval, etc.) is loaded
- * from EEPROM using loadConfig(). If no valid data is found, default values in config.h 
- * are used.
+ * - otaSetup() im setup() aufrufen, um Konfiguration, WLAN und Webserver zu initialisieren.
+ * - otaLoop() im loop() aufrufen, um OTA-Logik und Webserver-Anfragen zu bearbeiten.
  * 
- * When the user changes settings via the web configuration interface, the new values
- * are saved to EEPROM and take effect after a restart. The web interface allows
- * convenient editing and saving of all relevant parameters.
+ * Konfigurations-Handling:
+ * ----------------------------------------------------------------------------
+ * Beim Start werden Konfigurationsdaten (WLAN, OTA-Server, Update-Intervall etc.) 
+ * aus dem EEPROM geladen (loadConfig()). Falls keine gültigen Daten gefunden werden, 
+ * werden Default-Werte aus config.h verwendet.
  * 
- * Functions:
- *  - ensureWiFiConnection(): Ensures WiFi is connected.
- *  - indicateUpdateStatus(): Shows OTA update status via LED.
- *  - performOTAUpdate(): Checks for and performs firmware updates.
- *  - otaSetup(): Initializes configuration, WiFi, and web server.
- *  - otaLoop(): Handles OTA logic and web server requests.
+ * Änderungen über die Weboberfläche werden im EEPROM gespeichert und nach Neustart wirksam.
+ * Die Weboberfläche erlaubt komfortables Bearbeiten und Speichern aller relevanten Parameter.
+ * 
+ * Enthaltene Funktionen:
+ *  - ensureWiFiConnection(): Stellt sicher, dass WLAN verbunden ist.
+ *  - indicateUpdateStatus(): Zeigt OTA-Update-Status per LED an.
+ *  - performOTAUpdate(): Prüft und führt Firmware-Updates durch.
+ *  - otaSetup(): Initialisiert Konfiguration, WLAN und Webserver.
+ *  - otaLoop(): Bearbeitet OTA-Logik und Webserver-Anfragen.
  */
 
 #include <Arduino.h>
+#include <vector>
+#include <sstream>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
@@ -35,12 +38,13 @@
 #include "config.h"
 #include "WebConfig.h"
 
+
 extern Config config;
-extern WiFiClient client;
+WiFiClient client;
 
 /**
- * Ensures the ESP8266 is connected to WiFi.
- * Retries until a connection is established.
+ * Stellt sicher, dass das Gerät mit dem WLAN verbunden ist.
+ * Baut ggf. eine Verbindung auf und gibt die IP-Adresse aus.
  */
 void ensureWiFiConnection() {
   if (WiFi.status() != WL_CONNECTED) {
@@ -57,12 +61,44 @@ void ensureWiFiConnection() {
 }
 
 /**
- * Indicates the status of the OTA update using the built-in LED.
- * - LED on: Update failed
- * - LED off: No updates available
- * - LED blinks: Update successful
+ * Zerlegt einen Versionsstring (z.B. "1.2.3") in Integer-Komponenten.
+ * Liefert einen Vektor mit den einzelnen Zahlen zurück.
  */
-void indicateUpdateStatus(t_httpUpdate_return ret) {
+std::vector<int> splitVersion(const String& version) {
+  std::vector<int> parts;
+  int start = 0, end = 0;
+  while ((end = version.indexOf('.', start)) != -1) {
+    parts.push_back(version.substring(start, end).toInt());
+    start = end + 1;
+  }
+  parts.push_back(version.substring(start).toInt());
+  return parts;
+}
+
+/**
+ * Vergleicht zwei Versionsstrings.
+ * Rückgabewert: -1 wenn v1 < v2, 1 wenn v1 > v2, 0 wenn gleich.
+ */
+int compareVersion(const String& v1, const String& v2) {
+  std::vector<int> ver1 = splitVersion(v1);
+  std::vector<int> ver2 = splitVersion(v2);
+  size_t len = std::max(ver1.size(), ver2.size());
+  for (size_t i = 0; i < len; ++i) {
+    int num1 = (i < ver1.size()) ? ver1[i] : 0;
+    int num2 = (i < ver2.size()) ? ver2[i] : 0;
+    if (num1 < num2) return -1;
+    if (num1 > num2) return 1;
+  }
+  return 0;
+}
+
+/**
+ * Zeigt den Status des OTA-Updates über die LED und die serielle Schnittstelle an.
+ * - Bei Fehler: LED dauerhaft an
+ * - Kein Update: LED aus
+ * - Erfolgreiches Update: LED blinkt 5x
+ */
+void indicateUpdateStatus(t_httpUpdate_return ret, String vers) {
   switch (ret) {
     case HTTP_UPDATE_FAILED:
       digitalWrite(LED_BUILTIN, HIGH); // Error: LED stays on
@@ -73,7 +109,7 @@ void indicateUpdateStatus(t_httpUpdate_return ret) {
       Serial.println("No OTA Update available!");
       break;
     case HTTP_UPDATE_OK:
-      Serial.println("OTA Update completed!");
+      Serial.println("OTA Update to version " + vers +  " completed!");
       for (int i = 0; i < 5; i++) { // Success: LED blinks 5 times
         digitalWrite(LED_BUILTIN, HIGH);
         delay(200);
@@ -85,11 +121,12 @@ void indicateUpdateStatus(t_httpUpdate_return ret) {
 }
 
 /**
- * Performs an OTA update by connecting to the specified server.
- * Checks if the firmware version matches before updating.
- * Retries for up to 30 seconds if the update fails.
+ * Prüft, ob eine neue Firmware-Version auf dem OTA-Server verfügbar ist,
+ * und führt ggf. das Update durch. Speichert die neue Version im EEPROM.
  */
 void performOTAUpdate() {
+  String newVersion;
+  int comp = -1;
   char path[128];
   char buf[128];
   sprintf(path, "http://%s:%d/updates/%s", config.otaServer, config.otaPort, FIRMWARE_NAME);
@@ -103,10 +140,11 @@ void performOTAUpdate() {
     int httpCode = http.GET();
     Serial.printf("HTTP response code: %d\n", httpCode);
     if (httpCode == HTTP_CODE_OK) {
-      String newVersion = http.getString();
+      newVersion = http.getString();
       newVersion.trim();
+      comp = compareVersion(newVersion, config.version);
       Serial.printf("Available firmware version: %s\n", newVersion.c_str());
-      if (newVersion == CURRENT_VERSION) {
+      if (comp == 0){
         Serial.println("Firmware is already up-to-date.");
         http.end();
         return;
@@ -119,19 +157,24 @@ void performOTAUpdate() {
     Serial.println("Failed to connect to version check URL.");
   }
 
-  Serial.println("Starting OTA update...");
-  unsigned long startTime = millis();
-  while (millis() - startTime < 30000) {
-    t_httpUpdate_return ret = ESPhttpUpdate.update(client, path);
-    indicateUpdateStatus(ret);
-    if (ret == HTTP_UPDATE_OK) {
-      break;
+  if(comp > 0) {  // There is a new version on OTA server available
+    Serial.printf("New firmware version %s available, current version is %s\n", newVersion.c_str(), config.version);
+    strcpy(config.version, newVersion.c_str());
+    saveConfigToEEPROM(); // Save new version to EEPROM
+    Serial.println("EEPROM Version updated -> Starting OTA update...");
+    unsigned long startTime = millis();
+    while (millis() - startTime < 30000) {
+      t_httpUpdate_return ret = ESPhttpUpdate.update(client, path);
+      indicateUpdateStatus(ret, newVersion);
+      if (ret == HTTP_UPDATE_OK) {
+        break;
+      }
     }
   }
 }
 
 /**
- * Initializes OTA functionality: loads config, connects to WiFi, starts web server, prints version.
+ * Initialisiert die Konfiguration, verbindet mit WLAN und startet den Webserver.
  */
 void otaSetup() {
   loadConfig(); // Load configuration from EEPROM
@@ -143,13 +186,13 @@ void otaSetup() {
   ensureWiFiConnection();
 
   Serial.print(F("Firmware version "));
-  Serial.println(CURRENT_VERSION);
+  Serial.println(config.version);
 
   startWebServer(); // Start web configuration
 }
 
 /**
- * Handles OTA logic: ensures WiFi, web server, and triggers OTA update if enabled.
+ * Führt zyklisch die OTA-Logik aus, prüft auf Updates und bearbeitet Webserver-Anfragen.
  */
 void otaLoop() {
   ensureWiFiConnection();

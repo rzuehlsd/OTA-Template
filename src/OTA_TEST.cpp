@@ -53,7 +53,7 @@
   #define DEBUG_PRINT(x)
 #endif
 
-WiFiClient client;
+
 
 /**
  * Dummy setup function for custom initializations.
@@ -78,6 +78,9 @@ void userLoop() {
 void setup() {
   Serial.begin(115200);
   delay(1000);
+
+  Serial.println();
+  Serial.println(String("Starting ") + APPNAME + " ...");
 
   otaSetup();   // OTA-related initialization (now in OTA_Template.cpp)
   userSetup();  // Custom initialization
