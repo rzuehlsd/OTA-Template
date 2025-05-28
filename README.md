@@ -25,7 +25,8 @@ This project provides a complete solution for **Over-the-Air (OTA) firmware upda
 
 - A more detailed description could be found in the different sources and configuration files. The file OTA_TEST.cpp serves as an example to demonstrate the usage of the OTA Template, the node.js OTA Server and the extension of the integrated WebServer to host and process user specific pages. Therefore if you want to cretae your own OTA enabled application it is recommended to start with the OTA_TEST file and add your specific code.
 
-- Please note that the current version of the OTAServer just provides ota updates from the subdirectory "updates" and the update packages have fixed names "firmware.bin" and "firmware.bin.version", which have to correspond to the names given in the base configuration file "config.h" of the OTA enabled application. It is intended to change this to a more flexible solution to host updates for multiple projects on one OTAServer in a future release. 
+- Please note that the current version of the OTAServer just provides ota updates from the subdirectory "updates". To accomodate update packages for multiple ota enabled applications just provide more specific names than "firmware.bin" and "firmware.bin.version" in the base configuration file "config.h" of the OTA enabled application. Than place the bin and version files in the updates directory of the node.js OTA Server. That's all!
+ 
 ---
 
 ## File Structure

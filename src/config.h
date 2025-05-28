@@ -36,7 +36,7 @@
 **  Application Configuration Details  
 */
 #define APPNAME "OTA_Template Test"    // Application name shown in the web interface
-#define FIRMWARE_NAME "firmware.bin"   // Firmware binary file name on the OTA server
+#define FIRMWARE_NAME "ota_test_app.bin"   // Firmware binary file name on the OTA server
 #define FIRMWARE_VERSION  "1.1.0"      // Current firmware version of this build
 #define WEB_SERVER_PORT 80             // Port number for the web server to serve the configuration page
 #define DESCRIPTION   u8"Sample program to demonstrate the use of the OTA Update Template\n"\
