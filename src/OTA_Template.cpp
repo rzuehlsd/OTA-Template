@@ -31,12 +31,20 @@
 #include <Arduino.h>
 #include <vector>
 #include <sstream>
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-#include <ESP8266httpUpdate.h>
 #include <EEPROM.h>
 #include "config.h"
 #include "OTA_WebConfig.h"
+
+#if defined(ESP8266)
+  #include <ESP8266WiFi.h>
+  #include <ESP8266HTTPClient.h>
+  #include <ESP8266httpUpdate.h>
+#elif defined(ESP32)
+  #include <WiFi.h>
+  #include <HTTPClient.h>
+  #include <Update.h>
+  #include <HTTPUpdate.h> // You may need to use ArduinoHttpClient or similar for ESP32 OTA
+#endif
 
 extern Config config;
 WiFiClient client;
@@ -169,7 +177,12 @@ void performOTAUpdate() {
       saveConfigToEEPROM(); // Save new version to EEPROM
       Serial.println("Saving new version to EEPROM...");
       Serial.printf("Updating firmware from %s\n", path);
-      t_httpUpdate_return ret = ESPhttpUpdate.update(client, path);
+      #if defined(ESP8266)
+        t_httpUpdate_return ret = ESPhttpUpdate.update(client, path);
+      #elif defined(ESP32)
+        HTTPUpdate httpUpdate;
+        t_httpUpdate_return ret = httpUpdate.update(client, path);
+      #endif
       indicateUpdateStatus(ret, newVersion);
       if (ret == HTTP_UPDATE_OK) {
         break;

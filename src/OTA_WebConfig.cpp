@@ -27,13 +27,22 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include "config.h"
 #include "OTA_WebConfig.h"
 #include "OTA_WebForm.h"  // HTML form for the web interface
 
-ESP8266WebServer server(WEB_SERVER_PORT);
+#if defined(ESP8266)
+  #include <ESP8266WebServer.h>
+  ESP8266WebServer server(WEB_SERVER_PORT);
+#elif defined(ESP32)
+  #include <WebServer.h>
+  WebServer server(WEB_SERVER_PORT);
+#endif
+
+
+
+
+
 Config config; // Global configuration structure
 
 
@@ -174,9 +183,19 @@ void handleWebServer() {
  * Saves the current configuration to EEPROM.
  */
 void saveConfigToEEPROM() {
+#if defined(ESP8266)
   EEPROM.begin(EEPROM_SIZE);
-  EEPROM.put(EEPROM_START, config); // Use macro as the start address
+  EEPROM.put(EEPROM_START, config);
   EEPROM.commit();
+#elif defined(ESP32)
+  if (!EEPROM.begin(EEPROM_SIZE)) {
+    Serial.println("Failed to initialise EEPROM for ESP32");
+    return;
+  }
+  EEPROM.put(EEPROM_START, config);
+  EEPROM.commit();
+  EEPROM.end();
+#endif
 }
 
 /**
@@ -185,8 +204,18 @@ void saveConfigToEEPROM() {
  */
 Config readConfigFromEEPROM() {
   Config cfg;
+#if defined(ESP8266)
   EEPROM.begin(EEPROM_SIZE);
   EEPROM.get(EEPROM_START, cfg);
+#elif defined(ESP32)
+  if (!EEPROM.begin(EEPROM_SIZE)) {
+    Serial.println("Failed to initialise EEPROM for ESP32");
+    memset(&cfg, 0, sizeof(cfg));
+    return cfg;
+  }
+  EEPROM.get(EEPROM_START, cfg);
+  EEPROM.end();
+#endif
   return cfg;
 }
 

@@ -80,12 +80,14 @@ void userLoop() {
  */
 void setup() {
   Serial.begin(115200);
+  while(!Serial);
   delay(1000);
 
   Serial.println();
   Serial.println(String("Starting ") + APPNAME + " ...");
 
   otaSetup();   // OTA-related initialization (now in OTA_Template.cpp)
+
   userSetup();  // Custom initialization
 }
 

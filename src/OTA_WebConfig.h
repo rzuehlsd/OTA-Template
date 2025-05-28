@@ -17,11 +17,20 @@
 #ifndef OTA_WEBCONFIG_H
 #define OTA_WEBCONFIG_H
 
-#include <ESP8266WebServer.h>
+#include <Arduino.h>
+#include <EEPROM.h>
+
+#if defined(ESP8266)
+  #include <ESP8266WebServer.h>
+  #include <functional>
+  typedef ESP8266WebServer WebConfigServer;
+#elif defined(ESP32)
+  #include <WebServer.h>
+  #include <functional>
+  typedef WebServer WebConfigServer;
+#endif
 
 // Structure to hold configuration
-// Configuration structure including OTA enable flag
-// OTA_UPDATE_INTERVAL is included as a parameter in the struct
 struct Config {
   char ssid[32];              // WiFi SSID for network connection
   char password[32];          // WiFi password for network connection
@@ -36,7 +45,7 @@ struct Config {
 
 extern Config config; // Declare the config variable
 
-extern ESP8266WebServer server;  // Web server instance for handling configuration requests
+extern WebConfigServer server;  // Web server instance for handling configuration requests
 
 // Checks if the Config struct fits in EEPROM
 void checkConfigSize();
@@ -59,9 +68,7 @@ void handleWebServer();
 // Handles the root endpoint (main configuration page)
 void handleRoot();
 
-// register customer web pages as an extension
+// Register custom web pages as an extension
 void registerCustomEndpoint(const String& uri, std::function<void(void)> handler, HTTPMethod method);
-
-
 
 #endif // OTA_WEBCONFIG_H

@@ -13,6 +13,12 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#if defined(ESP32)
+    #ifndef LED_BUILTIN
+        #define LED_BUILTIN 8 // Default built-in LED pin for ESP32
+    #endif
+#endif
+
 /*
 **  WiFi Configuration Details  
 */
