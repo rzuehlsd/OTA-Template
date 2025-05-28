@@ -1,25 +1,25 @@
 /**
- * WebForm.h
+ * OTA_WebForm.h
  *
- * Dieses File stellt das HTML-Formular für die webbasierte Konfiguration des OTA Template Projekts bereit.
- * Die Funktion htmlForm() erzeugt und liefert die komplette HTML-Seite als String, inklusive aller
- * Eingabefelder für WLAN, OTA-Server, Firmware-Informationen und Steuer-Buttons.
+ * This file provides the HTML form for the web-based configuration of the OTA Template project.
+ * The htmlForm() function generates and returns the complete HTML page as a string, including all
+ * input fields for WiFi, OTA server, firmware information, and control buttons.
  *
- * Die Seite enthält:
- *   - Anzeige von APPNAME und einer Beschreibung (DESCRIPTION)
- *   - Eingabefelder für SSID, Passwort, OTA-Server, Port, OTA-Status und Update-Intervall
- *   - Anzeige von Firmware-Name und -Version
- *   - Buttons zum Speichern/Neustarten und zum Zurücksetzen auf Werkseinstellungen
- *   - Responsive und moderne Gestaltung per CSS
+ * The page includes:
+ *   - Display of APPNAME and a description (DESCRIPTION)
+ *   - Input fields for SSID, password, OTA server, port, OTA status, and update interval
+ *   - Display of firmware name and version
+ *   - Buttons for saving/restarting and resetting to factory defaults
+ *   - Responsive and modern design via CSS
  *
- * Änderungen an diesem File wirken sich direkt auf die Weboberfläche des Geräts aus.
+ * Changes to this file directly affect the device's web interface.
  */
 
-#ifndef WEBFORM_H
-#define WEBFORM_H
+#ifndef OTA_WEBFORM_H
+#define OTA_WEBFORM_H
 
 #include "config.h"
-#include "WebConfig.h"
+#include "OTA_WebConfig.h"
 
 // Returns the HTML form as a String
 inline String htmlForm() {
@@ -33,13 +33,13 @@ inline String htmlForm() {
   form += R"rawliteral(</title>
   <style>
     body {
-      background-color: #f0f0f0; /* lightgrey */
+      background-color: #f0f0f0; /* light grey */
       font-family: Arial, sans-serif;
     }
     .form-frame {
       border: 3px solid #003366;
       border-radius: 10px;
-      background: #e6f2ff; /* lightblue */
+      background: #e6f2ff; /* light blue */
       max-width: 500px;
       margin: 40px auto;
       padding: 24px 32px 16px 32px;
@@ -117,7 +117,7 @@ inline String htmlForm() {
   form += String(DESCRIPTION);
   form += R"rawliteral(</textarea>
     </div>
-    <form action="/set" method="POST">
+    <form action="/ota/set" method="POST">
       <table>
         <tr>
           <td class="label"><label for="ssid">WiFi SSID:</label></td>
@@ -144,6 +144,31 @@ inline String htmlForm() {
   form += R"rawliteral("></td>
         </tr>
         <tr>
+          <td class="label"><label for="otaTemplateVersion">OTA Template Version:</label></td>
+          <td class="input"><input type="text" id="otaTemplateVersion" name="otaTemplateVersion" value=")rawliteral";
+  form += String(OTA_VERSION);
+  form += R"rawliteral(" readonly></td>
+        </tr>
+        <tr>
+          <td class="label"><label for="otaEnabled">OTA Service:</label></td>
+          <td class="input">
+            <select id="otaEnabled" name="otaEnabled">
+              <option value="1")rawliteral";
+  if (config.otaEnabled) form += " selected";
+  form += R"rawliteral(>Enabled</option>
+              <option value="0")rawliteral";
+  if (!config.otaEnabled) form += " selected";
+  form += R"rawliteral(>Disabled</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="label"><label for="otaUpdateInterval">OTA Update Interval (min):</label></td>
+          <td class="input"><input type="number" id="otaUpdateInterval" name="otaUpdateInterval" min="1" value=")rawliteral";
+  form += String(config.otaUpdateInterval);
+  form += R"rawliteral("></td>
+        </tr>
+        <tr>
           <td class="label">Firmware Name:</td>
           <td class="input"><b>)rawliteral";
   form += String(FIRMWARE_NAME);
@@ -156,22 +181,13 @@ inline String htmlForm() {
   form += R"rawliteral(</b></td>
         </tr>
         <tr>
-          <td class="label"><label for="otaEnabled">OTA Service:</label></td>
-          <td class="input">
-            <select id="otaEnabled" name="otaEnabled">
-              <option value="1")rawliteral";
-  if (config.otaEnabled) form += " selected";
-  form += R"rawliteral(>Aktiviert</option>
-              <option value="0")rawliteral";
-  if (!config.otaEnabled) form += " selected";
-  form += R"rawliteral(>Deaktiviert</option>
-            </select>
-          </td>
+          <td class="label">Web Server IP:</td>
+          <td class="input"><b id="webServerIp"></b></td>
         </tr>
         <tr>
-          <td class="label"><label for="otaUpdateInterval">OTA Update Interval (min):</label></td>
-          <td class="input"><input type="number" id="otaUpdateInterval" name="otaUpdateInterval" min="1" value=")rawliteral";
-  form += String(config.otaUpdateInterval);
+          <td class="label"><label for="webServerPort">Web Server Port:</label></td>
+          <td class="input"><input type="number" id="webServerPort" name="webServerPort" min="1" max="65535" value=")rawliteral";
+  form += String(config.webServerPort);
   form += R"rawliteral("></td>
         </tr>
         <tr>
@@ -195,9 +211,17 @@ inline String htmlForm() {
       <span style="font-size:small; color:#666;">&copy; 2025 R. Zuehlsdorff</span>
     </div>
   </div>
+  <script>
+    // Try to display the current web server IP in the form
+    document.addEventListener("DOMContentLoaded", function() {
+      var ip = window.location.hostname;
+      var ipField = document.getElementById("webServerIp");
+      if(ipField) ipField.textContent = ip;
+    });
+  </script>
 </body>
 </html>
 )rawliteral";
   return form;
 }
-#endif // WEBFORM_H
+#endif // OTA_WEBFORM_H

@@ -42,7 +42,7 @@
 
 #include <Arduino.h>
 #include "config.h"
-#include "WebConfig.h"
+#include "OTA_WebConfig.h"
 #include "OTA_Template.h"
 
 #define DEBUG true
@@ -61,6 +61,9 @@
  */
 void userSetup() {
   // TODO: Insert your own initialization code here
+  registerCustomEndpoint("/hello", []() {
+    server.send(200, "text/plain", "Hello, world!");
+    }, HTTP_GET);
 }
 
 /**

@@ -14,12 +14,21 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 #include "config.h"
-#include "WebConfig.h"
+#include "OTA_WebConfig.h"
 
+// Ensures the device is connected to WiFi
 void ensureWiFiConnection();
+
+// Indicates the OTA update status via LED and serial output
 void indicateUpdateStatus(t_httpUpdate_return ret);
+
+// Checks for and performs OTA firmware updates if available
 void performOTAUpdate();
+
+// Initializes configuration, WiFi, and web server
 void otaSetup();
+
+// Main loop function to handle OTA logic and web server requests
 void otaLoop();
 
 #endif // OTA_TEMPLATE_H

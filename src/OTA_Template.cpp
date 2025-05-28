@@ -1,31 +1,31 @@
 /**
  * OTA_Template.cpp
  * 
- * Dieses File enthält die zentralen Funktionen für:
- *  - Automatische OTA-Firmware-Updates für ESP8266
- *  - Verwaltung und Überwachung der WLAN-Verbindung
- *  - Integration und Ablauf der webbasierten Konfigurationsoberfläche
+ * This file contains the main functions for:
+ *  - Automatic OTA firmware updates for ESP8266
+ *  - Management and monitoring of the WiFi connection
+ *  - Integration and workflow of the web-based configuration interface
  * 
- * Verwendung:
+ * Usage:
  * ----------------------------------------------------------------------------
- * - otaSetup() im setup() aufrufen, um Konfiguration, WLAN und Webserver zu initialisieren.
- * - otaLoop() im loop() aufrufen, um OTA-Logik und Webserver-Anfragen zu bearbeiten.
+ * - Call otaSetup() in setup() to initialize configuration, WiFi, and web server.
+ * - Call otaLoop() in loop() to handle OTA logic and web server requests.
  * 
- * Konfigurations-Handling:
+ * Configuration Handling:
  * ----------------------------------------------------------------------------
- * Beim Start werden Konfigurationsdaten (WLAN, OTA-Server, Update-Intervall etc.) 
- * aus dem EEPROM geladen (loadConfig()). Falls keine gültigen Daten gefunden werden, 
- * werden Default-Werte aus config.h verwendet.
+ * On startup, configuration data (WiFi, OTA server, update interval, etc.)
+ * is loaded from EEPROM (loadConfig()). If no valid data is found,
+ * default values from config.h are used.
  * 
- * Änderungen über die Weboberfläche werden im EEPROM gespeichert und nach Neustart wirksam.
- * Die Weboberfläche erlaubt komfortables Bearbeiten und Speichern aller relevanten Parameter.
+ * Changes via the web interface are saved to EEPROM and take effect after restart.
+ * The web interface allows convenient editing and saving of all relevant parameters.
  * 
- * Enthaltene Funktionen:
- *  - ensureWiFiConnection(): Stellt sicher, dass WLAN verbunden ist.
- *  - indicateUpdateStatus(): Zeigt OTA-Update-Status per LED an.
- *  - performOTAUpdate(): Prüft und führt Firmware-Updates durch.
- *  - otaSetup(): Initialisiert Konfiguration, WLAN und Webserver.
- *  - otaLoop(): Bearbeitet OTA-Logik und Webserver-Anfragen.
+ * Included functions:
+ *  - ensureWiFiConnection(): Ensures WiFi is connected.
+ *  - indicateUpdateStatus(): Shows OTA update status via LED.
+ *  - performOTAUpdate(): Checks for and performs firmware updates.
+ *  - otaSetup(): Initializes configuration, WiFi, and web server.
+ *  - otaLoop(): Handles OTA logic and web server requests.
  */
 
 #include <Arduino.h>
@@ -36,15 +36,14 @@
 #include <ESP8266httpUpdate.h>
 #include <EEPROM.h>
 #include "config.h"
-#include "WebConfig.h"
-
+#include "OTA_WebConfig.h"
 
 extern Config config;
 WiFiClient client;
 
 /**
- * Stellt sicher, dass das Gerät mit dem WLAN verbunden ist.
- * Baut ggf. eine Verbindung auf und gibt die IP-Adresse aus.
+ * Ensures that the device is connected to WiFi.
+ * If not, tries to connect and prints the IP address once connected.
  */
 void ensureWiFiConnection() {
   if (WiFi.status() != WL_CONNECTED) {
@@ -61,8 +60,8 @@ void ensureWiFiConnection() {
 }
 
 /**
- * Zerlegt einen Versionsstring (z.B. "1.2.3") in Integer-Komponenten.
- * Liefert einen Vektor mit den einzelnen Zahlen zurück.
+ * Splits a version string (e.g. "1.2.3") into integer components.
+ * Returns a vector with the individual numbers.
  */
 std::vector<int> splitVersion(const String& version) {
   std::vector<int> parts;
@@ -76,8 +75,8 @@ std::vector<int> splitVersion(const String& version) {
 }
 
 /**
- * Vergleicht zwei Versionsstrings.
- * Rückgabewert: -1 wenn v1 < v2, 1 wenn v1 > v2, 0 wenn gleich.
+ * Compares two version strings.
+ * Return value: -1 if v1 < v2, 1 if v1 > v2, 0 if equal.
  */
 int compareVersion(const String& v1, const String& v2) {
   std::vector<int> ver1 = splitVersion(v1);
@@ -93,10 +92,10 @@ int compareVersion(const String& v1, const String& v2) {
 }
 
 /**
- * Zeigt den Status des OTA-Updates über die LED und die serielle Schnittstelle an.
- * - Bei Fehler: LED dauerhaft an
- * - Kein Update: LED aus
- * - Erfolgreiches Update: LED blinkt 5x
+ * Shows the status of the OTA update via the LED and serial interface.
+ * - On error: LED stays on
+ * - No update: LED off
+ * - Successful update: LED blinks 5 times
  */
 void indicateUpdateStatus(t_httpUpdate_return ret, String vers) {
   switch (ret) {
@@ -121,8 +120,8 @@ void indicateUpdateStatus(t_httpUpdate_return ret, String vers) {
 }
 
 /**
- * Prüft, ob eine neue Firmware-Version auf dem OTA-Server verfügbar ist,
- * und führt ggf. das Update durch. Speichert die neue Version im EEPROM.
+ * Checks if a new firmware version is available on the OTA server,
+ * and performs the update if necessary. Saves the new version to EEPROM.
  */
 void performOTAUpdate() {
   String newVersion;
@@ -163,7 +162,13 @@ void performOTAUpdate() {
     saveConfigToEEPROM(); // Save new version to EEPROM
     Serial.println("EEPROM Version updated -> Starting OTA update...");
     unsigned long startTime = millis();
-    while (millis() - startTime < 30000) {
+    while (millis() - startTime < config.otaUpdateInterval * 60000) { // Check for updates within the interval
+      Serial.printf("Performing OTA update to version %s...\n", newVersion.c_str());
+      // Perform the OTA update
+      strcpy(config.version, newVersion.c_str());
+      saveConfigToEEPROM(); // Save new version to EEPROM
+      Serial.println("Saving new version to EEPROM...");
+      Serial.printf("Updating firmware from %s\n", path);
       t_httpUpdate_return ret = ESPhttpUpdate.update(client, path);
       indicateUpdateStatus(ret, newVersion);
       if (ret == HTTP_UPDATE_OK) {
@@ -174,12 +179,13 @@ void performOTAUpdate() {
 }
 
 /**
- * Initialisiert die Konfiguration, verbindet mit WLAN und startet den Webserver.
+ * Initializes the configuration, connects to WiFi, and starts the web server.
  */
 void otaSetup() {
-  loadConfig(); // Load configuration from EEPROM
-  Serial.println("READY - Connecting to WiFi ..");
+  checkConfigSize();    // check if Config struct fits in EEPROM
+  loadConfig();         // Load configuration from EEPROM
 
+  Serial.println("READY - Connecting to WiFi ..");
   WiFi.mode(WIFI_STA);
   WiFi.begin(config.ssid, config.password);
 
@@ -192,7 +198,7 @@ void otaSetup() {
 }
 
 /**
- * Führt zyklisch die OTA-Logik aus, prüft auf Updates und bearbeitet Webserver-Anfragen.
+ * Cyclically executes the OTA logic, checks for updates, and handles web server requests.
  */
 void otaLoop() {
   ensureWiFiConnection();
@@ -200,7 +206,8 @@ void otaLoop() {
   if(config.otaEnabled) {
     // Check for OTA updates every configured interval
     static unsigned long lastUpdateCheck = 0;
-    if (millis() - lastUpdateCheck > config.otaUpdateInterval * 60000) { // Convert minutes to milliseconds
+    // initial update after start than every otaUpdateInterval minutes
+    if ((lastUpdateCheck == 0) || (millis() - lastUpdateCheck > config.otaUpdateInterval * 60000)) { // Convert minutes to milliseconds
       performOTAUpdate();
       lastUpdateCheck = millis();
     }
