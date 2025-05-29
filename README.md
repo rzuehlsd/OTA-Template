@@ -184,6 +184,7 @@ registerCustomEndpoint("/hello", []() {
   - Ensure the OTA server is running and accessible from the ESP board.
   - Check that `firmware.bin` and `firmware.bin.version` exist in the `updates` directory.
   - Make sure the OTA server port matches `OTA_PORT` in `config.h`.
+  - Sometimes the ESP device will not restart after OTA update and has to be started manually, e.g. resetted.
 
 - **Web interface not loading?**  
   - Confirm the device's IP address.
