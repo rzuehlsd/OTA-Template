@@ -24,7 +24,7 @@ REMARK:  The framework should also fit other ESP32 variants, but has only been t
 ## Overview
 
 - **OTA framework**: Connects to WiFi, checks for new firmware on the OTA server, and updates itself if a newer version is available. All settings can be configured via a web interface.
-- **OTA Server (Node.js)**: Hosts the firmware binary and version file, serving them to ESP8266 devices for updates.
+- **OTA Server (Node.js)**: Hosts the firmware binary and version file, serving them to devices for updates.
 
 - A more detailed description could be found in the different sources and configuration files. The file OTA_TEST.cpp serves as an example to demonstrate the usage of the OTA Template, the node.js OTA Server and the extension of the integrated WebServer to host and process user specific pages. Therefore if you want to cretae your own OTA enabled application it is recommended to start with the OTA_TEST file and add your specific code.
 
