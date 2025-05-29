@@ -107,8 +107,8 @@ OTAServer/
    - `firmware.bin` — The compiled firmware binary.
    - `firmware.bin.version` — A text file containing the version string (e.g., `1.1.0`).
 
-4. **Create `ota-server.js` with the following content:**
-   (See `ota-server.js` in this repository for the full code.)
+4. **Copy `ota-server.js` to the directory OTAServer created obove**
+   - See `ota-server.js` in this repository for the full code.
 
 5. **Install dependencies:**
    ```sh
