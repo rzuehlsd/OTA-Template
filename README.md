@@ -29,7 +29,9 @@ REMARK:  The framework should also fit other ESP32 variants, but has only been t
 
 - A more detailed description of the OTA framework and the OTA server could be found in the different sources and configuration files. The file OTA_TEST.cpp serves as an example to demonstrate the usage of the OTA Template, the node.js OTA Server and the extension of the integrated WebServer to host and process user specific pages. Therefore if you want to cretae your own OTA enabled application it is recommended to start with the OTA_TEST file and add your specific code to the provided user hooks.
 
-- Please note that the current version of the OTAServer just provides ota updates from the subdirectory "updates". To accomodate update packages for multiple ota enabled applications just provide more specific names than "firmware.bin" and "firmware.bin.version" in the base configuration file "config.h" of the OTA enabled application. Than place the bin and version files in the updates directory of the node.js OTA Server. It is also suggested to name the firmware bin file according to application and chip variant. An update from a firmware version intended for a differen chip variant will certainly fail! That's all - enjoy!
+- Please note that the current version of the OTAServer just provides ota updates from the subdirectory "updates". To accomodate update packages for multiple ota enabled applications just provide more specific names than "firmware.bin" and "firmware.bin.version" in the base configuration file "config.h" of the OTA enabled application. Than place the bin and version files in the updates directory of the node.js OTA Server. It is also suggested to name the firmware bin file according to application and chip variant. An update from a firmware version intended for a differen chip variant will certainly fail! 
+
+That's all - enjoy!
  
 ---
 
