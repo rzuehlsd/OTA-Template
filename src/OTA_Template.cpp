@@ -32,7 +32,9 @@
 #include <vector>
 #include <sstream>
 #include "config.h"
-#include "OTA_WebConfig.h"
+#include "OTA_Template.h"
+#include "OTA_WebConfig.h" // Include the web configuration header for web server handling
+
 
 #if defined(ESP8266)
   #include <ESP8266WiFi.h>

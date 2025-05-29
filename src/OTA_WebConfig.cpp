@@ -6,8 +6,9 @@
  * in EEPROM for ESP8266/ESP32 projects.
  */
 
-#include "OTA_WebConfig.h"
 #include <EEPROM.h>
+#include "config.h"
+#include "OTA_WebConfig.h"
 #include "OTA_WebForm.h"  // HTML form for the web interface
 
 #if defined(ESP8266)
