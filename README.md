@@ -84,7 +84,7 @@ OTAServer/
    - The device will restart if required.
 
 
-![OTA Web Interface Screenshot](ota-config.jpg)
+<img src="ota-config.jpg" alt="OTA Web Interface Screenshot" width="300"/>
 
 ---
 
