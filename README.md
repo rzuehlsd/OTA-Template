@@ -130,7 +130,8 @@ OTAServer/
 - It compares its defined version number with the version number found in the version file on the OTA server. 
   If a newer version is found, it downloads `firmware.bin` and updates itself.
   The version numbereing schema has to be "n1.n2.n3.n4", e.g. "0.9.0.8" or "1.2.0.5". Here the second example 
-  is "greater" than the first. The compare function is located in OTA_Template.cpp and can be changed if needed.
+  is "greater", hence newer than the first, which will trigger an OTA update.
+  The compare function is located in OTA_Template.cpp and can be changed if needed.
 - Be aware that the configuration settings stored in EEPROM will not be cleared during the update! 
   All configuration (WiFi, OTA server, update interval, etc.) can be managed via the web interface at `/ota`
   endpoint and changed individually or resetted to the default values stored in the file config.h.
