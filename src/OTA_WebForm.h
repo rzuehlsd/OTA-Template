@@ -5,13 +5,6 @@
  * The htmlForm() function generates and returns the complete HTML page as a string, including all
  * input fields for WiFi, OTA server, firmware information, and control buttons.
  *
- * The page includes:
- *   - Display of APPNAME and a description (DESCRIPTION)
- *   - Input fields for SSID, password, OTA server, port, OTA status, and update interval
- *   - Display of firmware name and version
- *   - Buttons for saving/restarting and resetting to factory defaults
- *   - Responsive and modern design via CSS
- *
  * Changes to this file directly affect the device's web interface.
  */
 
@@ -19,7 +12,6 @@
 #define OTA_WEBFORM_H
 
 #include "config.h"
-#include "OTA_WebConfig.h"
 
 // Returns the HTML form as a String
 inline String htmlForm() {

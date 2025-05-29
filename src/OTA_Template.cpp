@@ -31,7 +31,6 @@
 #include <Arduino.h>
 #include <vector>
 #include <sstream>
-#include <EEPROM.h>
 #include "config.h"
 #include "OTA_WebConfig.h"
 

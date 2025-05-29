@@ -3,50 +3,20 @@
  *
  * This file contains all functions for managing configuration data,
  * providing web server endpoints, and saving/loading settings
- * in EEPROM for ESP8266 projects.
- *
- * Via the web interface, WiFi, OTA, and other settings
- * can be conveniently changed and permanently saved.
- *
- * Notes for extending with custom configuration fields:
- * ----------------------------------------------------------------------------
- * 1. Extend the Config structure (in config.h) with your own variables.
- * 2. Add new input fields in the HTML form in OTA_WebForm.h and read them in handleSet(),
- *    then store them in the Config structure.
- * 3. In loadConfig(), set default values for new fields if necessary.
- * 4. Display the new values in the form.
- *
- * Example: For a new field "deviceName":
- *   - In config.h: add char deviceName[32]; to the Config structure.
- *   - In OTA_WebForm.h: add an input field for "deviceName".
- *   - In handleSet(): server.arg("deviceName").toCharArray(config.deviceName, sizeof(config.deviceName));
- *   - In loadConfig(): set a default value if EEPROM is empty.
- *   - Display in the form.
+ * in EEPROM for ESP8266/ESP32 projects.
  */
 
-
-#include <Arduino.h>
-#include <EEPROM.h>
-#include "config.h"
 #include "OTA_WebConfig.h"
+#include <EEPROM.h>
 #include "OTA_WebForm.h"  // HTML form for the web interface
 
 #if defined(ESP8266)
-  #include <ESP8266WebServer.h>
   ESP8266WebServer server(WEB_SERVER_PORT);
 #elif defined(ESP32)
-  #include <WebServer.h>
   WebServer server(WEB_SERVER_PORT);
 #endif
 
-
-
-
-
 Config config; // Global configuration structure
-
-
-
 
 // Call this function in setup() to check if Config struct fits in EEPROM
 void checkConfigSize() {
@@ -54,7 +24,6 @@ void checkConfigSize() {
         Serial.println("WARNING: Config struct size exceeds EEPROM_SIZE! Data may be lost.");
     }
 }
-
 
 /**
  * handleRoot()
@@ -230,6 +199,6 @@ Config readConfigFromEEPROM() {
  * Example usage:
  *   registerCustomEndpoint("/custom", []() { server.send(200, "text/plain", "Hello from custom endpoint!"); });
  */
-void registerCustomEndpoint(const String& uri, std::function<void(void)> handler, HTTPMethod method = HTTP_GET) {
+void registerCustomEndpoint(const String& uri, std::function<void(void)> handler, HTTPMethod method) {
     server.on(uri.c_str(), method, handler);
 }

@@ -13,11 +13,26 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#if defined(ESP32)
+// Define LED_BUILTIN for all supported platforms
+/* #if defined(ESP8266)
     #ifndef LED_BUILTIN
-        #define LED_BUILTIN 8 // Default built-in LED pin for ESP32
+        #define LED_BUILTIN 2 // GPIO2 is usually the built-in LED on ESP8266
     #endif
-#endif
+#elif defined(ESP32)
+    #if CONFIG_IDF_TARGET_ESP32C3
+        #ifndef LED_BUILTIN
+            #define LED_BUILTIN 8 // GPIO8 is the built-in LED on ESP32-C3
+        #endif
+    #elif CONFIG_IDF_TARGET_ESP32S3
+        #ifndef LED_BUILTIN
+            #define LED_BUILTIN 8 // GPIO48 is often the built-in LED on ESP32-S3 DevKit
+        #endif
+    #else
+        #ifndef LED_BUILTIN
+            #define LED_BUILTIN 2 // GPIO2 is usually the built-in LED on generic ESP32
+        #endif
+    #endif
+#endif */
 
 /*
 **  WiFi Configuration Details  
@@ -45,8 +60,8 @@
 #define FIRMWARE_NAME "ota_test_app.bin"   // Firmware binary file name on the OTA server
 #define FIRMWARE_VERSION  "1.1.0"      // Current firmware version of this build
 #define WEB_SERVER_PORT 80             // Port number for the web server to serve the configuration page
-#define DESCRIPTION   u8"Sample program to demonstrate the use of the OTA Update Template\n"\
-                        "with Web Configuration on ESP8266\n"\ 
-                        "User Web page at \\hello \n"
-
+// #define DESCRIPTION   u8"Sample program to demonstrate the use of the OTA Update Template\n"\
+//                         "with Web Configuration on ESP8266, ESP32s3, ESP32c3\n"\ 
+//                         "User pages at //hello "
+#define DESCRIPTION u8"Initial Version"
 #endif // CONFIG_H

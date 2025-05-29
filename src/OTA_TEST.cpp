@@ -64,6 +64,8 @@ void userSetup() {
   registerCustomEndpoint("/hello", []() {
     server.send(200, "text/plain", "Hello, world!");
     }, HTTP_GET);
+
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
 /**
@@ -72,6 +74,10 @@ void userSetup() {
  */
 void userLoop() {
   // TODO: Insert your own cyclic tasks here
+  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+  delay(1000);                      // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
+  delay(1000);                      // wait for a second
 }
 
 /**
@@ -80,8 +86,11 @@ void userLoop() {
  */
 void setup() {
   Serial.begin(115200);
-  while(!Serial);
-  delay(1000);
+  while(!Serial)
+  {
+    delay(100);
+  };
+ 
 
   Serial.println();
   Serial.println(String("Starting ") + APPNAME + " ...");

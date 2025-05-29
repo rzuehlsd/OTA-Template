@@ -17,9 +17,6 @@
 #ifndef OTA_WEBCONFIG_H
 #define OTA_WEBCONFIG_H
 
-#include <Arduino.h>
-#include <EEPROM.h>
-
 #if defined(ESP8266)
   #include <ESP8266WebServer.h>
   #include <functional>
