@@ -83,8 +83,9 @@ OTAServer/
 4. **Configure settings as needed and save.**
    - The device will restart if required.
 
-
-<img src="ota-config.jpg" alt="OTA Web Interface Screenshot" width="300" style="display:block; margin:auto;/>
+<p align="center">
+  <img src="ota-config.jpg" alt="OTA Web Interface Screenshot" width="300"/>
+</p>
 
 ---
 
@@ -134,7 +135,7 @@ OTAServer/
 ## Custom Extensions
 
 The OTA_TEST.cpp source provides hooks for custom extensions to the application and demonstrates the use in the source code.
-The function userSetup() will be called once the setup() of the OTA Framework is completed. 
+The function `userSetup()` will be called once the `setup()` of the OTA Framework is completed. 
 
 ```cpp
 void userSetup() {
@@ -146,7 +147,7 @@ void userSetup() {
     pinMode(LED_BUILTIN, OUTPUT);
 }
 ```
-The function userLoop() is called after the call of the event loop of the OTA framework.
+The function `userLoop()` is called after the call of the event loop of the OTA framework.
 
 ```cpp
 void userLoop() {
