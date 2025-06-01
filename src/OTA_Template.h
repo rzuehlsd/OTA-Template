@@ -14,6 +14,10 @@
 
 #include "OTA_WebConfig.h" // Include the web configuration header for web server handling
 
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2 // Default to GPIO2 if not defined, adjust as needed for your board
+#endif
+
 // Initializes configuration, WiFi, and web server
 // See OTA_WebConfig.h for OTAConfig definition
 void otaSetup(const OTAConfig &defaults); // Changed to reference

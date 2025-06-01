@@ -28,7 +28,7 @@
 #define OTA_PORT 3000                  // Port number used to connect to the OTA server
 #define OTA_UPDATE_INTERVAL 60         // Interval (in minutes) to check for OTA updates
 #define OTA_ENABLED false              // Enable (true) or disable (false) OTA update functionality by default
-#define OTA_CONFIG_ROOT "/ota"         // Root path for OTA updates on the ota-server
+#define OTA_CONFIG_ROOT "/ota"         // Root path for OTA updates on the ota-#server
 #define OTA_CONFIG_SET "/ota/set"      // Path for setting OTA configuration via web interface
 
 /*
