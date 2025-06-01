@@ -13,26 +13,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Define LED_BUILTIN for all supported platforms
-/* #if defined(ESP8266)
-    #ifndef LED_BUILTIN
-        #define LED_BUILTIN 2 // GPIO2 is usually the built-in LED on ESP8266
-    #endif
-#elif defined(ESP32)
-    #if CONFIG_IDF_TARGET_ESP32C3
-        #ifndef LED_BUILTIN
-            #define LED_BUILTIN 8 // GPIO8 is the built-in LED on ESP32-C3
-        #endif
-    #elif CONFIG_IDF_TARGET_ESP32S3
-        #ifndef LED_BUILTIN
-            #define LED_BUILTIN 8 // GPIO48 is often the built-in LED on ESP32-S3 DevKit
-        #endif
-    #else
-        #ifndef LED_BUILTIN
-            #define LED_BUILTIN 2 // GPIO2 is usually the built-in LED on generic ESP32
-        #endif
-    #endif
-#endif */
 
 /*
 **  WiFi Configuration Details  
@@ -47,10 +27,8 @@
 #define OTA_VERSION "1.0.0.0"          // Version number of the OTA template (not firmware)
 #define OTA_PORT 3000                  // Port number used to connect to the OTA server
 #define OTA_UPDATE_INTERVAL 60         // Interval (in minutes) to check for OTA updates
-#define EEPROM_SIZE 256                // Size of EEPROM used for storing configuration
-#define EEPROM_START 0                 // Start address in EEPROM for configuration storage
 #define OTA_ENABLED false              // Enable (true) or disable (false) OTA update functionality by default
-#define OTA_CONFIG_ROOT "/ota"         // Root path for OTA updates on the server
+#define OTA_CONFIG_ROOT "/ota"         // Root path for OTA updates on the ota-server
 #define OTA_CONFIG_SET "/ota/set"      // Path for setting OTA configuration via web interface
 
 /*
@@ -63,5 +41,5 @@
 #define DESCRIPTION   u8"Sample program to demonstrate the use of the OTA Update Template\n"\
                         "with Web Configuration on ESP8266, ESP32s3, ESP32c3\n"\ 
                         "User pages at //hello "
-// #define DESCRIPTION u8"Initial Version"
+
 #endif // CONFIG_H

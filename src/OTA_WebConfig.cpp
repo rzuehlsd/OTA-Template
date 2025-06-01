@@ -1,28 +1,53 @@
 /**
  * OTA_WebConfig.cpp
  *
- * This file contains all functions for managing configuration data,
- * providing web server endpoints, and saving/loading settings
- * in EEPROM for ESP8266/ESP32 projects.
+ * This file implements all functions for managing device configuration,
+ * providing web server endpoints, and saving/loading settings in EEPROM
+ * for ESP8266/ESP32 projects using the OTA Template.
+ *
+ * Features:
+ *  - Defines and manages the OTAConfig structure, which holds all runtime configuration.
+ *  - Loads configuration from EEPROM on startup, or uses a provided default OTAConfig struct if no valid data is found.
+ *  - Saves configuration changes to EEPROM for persistence across reboots.
+ *  - Provides a web-based configuration interface, including HTML form generation and HTTP endpoint handlers.
+ *  - Allows registration of custom web endpoints for user extensions.
+ *  - Integrates with the main OTA_Template logic for seamless configuration and update management.
+ *
+ * Usage:
+ *  - Call loadConfig() with a default OTAConfig struct to initialize configuration at startup.
+ *  - Use startWebServer() to initialize and start the configuration web server.
+ *  - Call handleWebServer() regularly in your main loop to process HTTP requests.
+ *  - Use saveConfigToEEPROM() to persist changes made via the web interface or programmatically.
+ *  - Use registerCustomEndpoint() to add additional HTTP endpoints to the configuration server.
+ *
+ * Any changes to this file directly affect the configuration logic and web interface
+ * of the OTA Template project.
+ *
+ * Author: R. Zuehlsdorff
+ * Copyright 2025
  */
 
 #include <EEPROM.h>
-#include "config.h"
 #include "OTA_WebConfig.h"
 #include "OTA_WebForm.h"  // HTML form for the web interface
 
+
+
+// Change from Config to OTAConfig
+OTAConfig config; // Global configuration structure
+const OTAConfig *defaults; // Pointer to default configuration structure
+
 #if defined(ESP8266)
-  ESP8266WebServer server(WEB_SERVER_PORT);
+  ESP8266WebServer server(config.webServerPort);
 #elif defined(ESP32)
-  WebServer server(WEB_SERVER_PORT);
+  WebServer server(config.webServerPort);
 #endif
 
-Config config; // Global configuration structure
 
-// Call this function in setup() to check if Config struct fits in EEPROM
+// Call this function in setup() to check if OTAConfig struct fits in EEPROM
 void checkConfigSize() {
-    if (sizeof(Config) > EEPROM_SIZE) {
-        Serial.println("WARNING: Config struct size exceeds EEPROM_SIZE! Data may be lost.");
+    if (sizeof(OTAConfig) > EEPROM_SIZE) {
+        Serial.println("WARNING: OTAConfig struct size exceeds EEPROM_SIZE! Data may be lost.");
     }
 }
 
@@ -38,22 +63,14 @@ void handleRoot() {
 /**
  * handleSet()
  * Called when the configuration form is submitted (POST to "/set").
- * Reads the form data, stores it in the Config structure, and writes it to EEPROM.
+ * Reads the form data, stores it in the OTAConfig structure, and writes it to EEPROM.
  * Detects if a restart is requested and restarts the device if necessary.
  */
 void handleSet() {
   // Check for reset to defaults
   if (server.hasArg("resetDefaults") && server.arg("resetDefaults") == "1") {
     // Set all config fields to defaults
-    strcpy(config.ssid, APSSID);
-    strcpy(config.password, APPSK);
-    strcpy(config.otaServer, OTA_SERVER);
-    config.otaPort = OTA_PORT;
-    config.otaEnabled = OTA_ENABLED;
-    config.otaUpdateInterval = OTA_UPDATE_INTERVAL;
-    strcpy(config.version, FIRMWARE_VERSION); // Make sure FIRMWARE_VERSION is defined
-    config.webServerPort = WEB_SERVER_PORT;
-
+    setDefaultConfig(config, defaults);
     // Save defaults to EEPROM using the helper function
     saveConfigToEEPROM();
 
@@ -70,7 +87,7 @@ void handleSet() {
   String otaUpdateInterval = server.arg("otaUpdateInterval");
   String webServerPort = server.arg("webServerPort");
 
-  // Copy values into the Config structure
+  // Copy values into the OTAConfig structure
   ssid.toCharArray(config.ssid, sizeof(config.ssid));
   password.toCharArray(config.password, sizeof(config.password));
   otaServer.toCharArray(config.otaServer, sizeof(config.otaServer));
@@ -96,25 +113,38 @@ void handleSet() {
 }
 
 /**
+ * setDefaultConfig()
+ * Sets the provided OTAConfig struct (cfg) to the values from the given default OTAConfig struct (defaults).
+ */
+void setDefaultConfig(OTAConfig &cfg, const OTAConfig *defaults) {
+    if (!defaults) return;
+    strcpy(cfg.ssid, defaults->ssid);
+    strcpy(cfg.password, defaults->password);
+    strcpy(cfg.otaServer, defaults->otaServer);
+    cfg.otaPort = defaults->otaPort;
+    cfg.otaEnabled = defaults->otaEnabled;
+    cfg.otaUpdateInterval = defaults->otaUpdateInterval;
+    strcpy(cfg.firmware_vers, defaults->firmware_vers);
+    cfg.webServerPort = defaults->webServerPort;
+    strcpy(cfg.appname, defaults->appname);
+    strcpy(cfg.firmware_name, defaults->firmware_name);
+    strcpy(cfg.description, defaults->description);
+}
+
+/**
  * loadConfig()
- * Loads the configuration from EEPROM into the global Config structure.
+ * Loads the configuration from EEPROM into the global OTAConfig structure.
  * If no valid data is present, default values are set.
  * Prints the loaded values to the serial interface.
  */
-void loadConfig() {
+void loadConfig(const OTAConfig *default_config) {
+  defaults = default_config; // Set the defaults pointer to the provided default config
+  // Read the configuration from EEPROM
   config = readConfigFromEEPROM();
 
   // Check if the SSID is valid (simple check)
   if (config.ssid[0] == '\0' || config.ssid[0] == 0xFF) {
-    // If EEPROM is empty or invalid, set default values
-    strcpy(config.ssid, APSSID);
-    strcpy(config.password, APPSK);
-    strcpy(config.otaServer, OTA_SERVER);
-    config.otaPort = OTA_PORT;
-    config.otaEnabled = OTA_ENABLED; 
-    config.otaUpdateInterval = OTA_UPDATE_INTERVAL;
-    strcpy(config.version, FIRMWARE_VERSION);
-    config.webServerPort = WEB_SERVER_PORT;
+    setDefaultConfig(config, defaults);
     Serial.println("EEPROM empty, loaded default values.");
   } else {
     Serial.println("Configuration loaded from EEPROM.");
@@ -125,6 +155,10 @@ void loadConfig() {
   Serial.printf("OTA Server: %s\n", config.otaServer);
   Serial.printf("OTA Port: %d\n", config.otaPort);
   Serial.printf("OTA Enabled: %s\n", config.otaEnabled ? "true" : "false");
+  Serial.printf("Firmware Version: %s\n", config.firmware_vers);
+  Serial.printf("App Name: %s\n", config.appname);
+  Serial.printf("Firmware Name: %s\n", config.firmware_name);
+  Serial.printf("Description: %s\n", config.description);
 }
 
 /**
@@ -172,8 +206,8 @@ void saveConfigToEEPROM() {
  * readConfigFromEEPROM()
  * Reads the configuration from EEPROM and returns it.
  */
-Config readConfigFromEEPROM() {
-  Config cfg;
+OTAConfig readConfigFromEEPROM() {
+  OTAConfig cfg;
 #if defined(ESP8266)
   EEPROM.begin(EEPROM_SIZE);
   EEPROM.get(EEPROM_START, cfg);

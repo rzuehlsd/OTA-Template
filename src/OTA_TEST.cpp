@@ -42,7 +42,6 @@
 
 #include <Arduino.h>
 #include "config.h"
-#include "OTA_WebConfig.h"
 #include "OTA_Template.h"
 
 #define DEBUG true
@@ -54,6 +53,19 @@
 #endif
 
 
+const OTAConfig defaultOTAConfig = {
+    APSSID,                // ssid
+    APPSK,                 // password
+    OTA_SERVER,            // otaServer
+    OTA_PORT,              // otaPort
+    OTA_ENABLED,           // otaEnabled
+    OTA_UPDATE_INTERVAL,   // otaUpdateInterval
+    WEB_SERVER_PORT,       // webServerPort
+    APPNAME,               // appname
+    FIRMWARE_NAME,         // firmware_name
+    FIRMWARE_VERSION,      // firmware_vers
+    DESCRIPTION            // description
+};
 
 /**
  * Dummy setup function for custom initializations.
@@ -90,13 +102,11 @@ void setup() {
   {
     delay(100);
   };
- 
 
   Serial.println();
   Serial.println(String("Starting ") + APPNAME + " ...");
 
-  otaSetup();   // OTA-related initialization (now in OTA_Template.cpp)
-
+  otaSetup(defaultOTAConfig);   // Pass by reference, no &
   userSetup();  // Custom initialization
 }
 
@@ -107,3 +117,4 @@ void loop() {
   otaLoop();    // OTA-related tasks (now in OTA_Template.cpp)
   userLoop();   // Custom cyclic tasks
 }
+

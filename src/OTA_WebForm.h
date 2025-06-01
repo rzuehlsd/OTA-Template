@@ -1,17 +1,21 @@
 /**
  * OTA_WebForm.h
  *
- * This file provides the HTML form for the web-based configuration of the OTA Template project.
- * The htmlForm() function generates and returns the complete HTML page as a string, including all
- * input fields for WiFi, OTA server, firmware information, and control buttons.
+ * Provides the HTML form and related logic for the web-based configuration interface
+ * of the OTA Template project. The htmlForm() function generates and returns the complete
+ * HTML page as a string, including all input fields for WiFi, OTA server, firmware information,
+ * and control buttons. The form reflects the current values from the global OTAConfig instance.
  *
- * Changes to this file directly affect the device's web interface.
+ * Any changes to this file directly affect the device's web configuration interface.
+ *
+ * Author: R. Zuehlsdorff
+ * Copyright 2025
  */
 
 #ifndef OTA_WEBFORM_H
 #define OTA_WEBFORM_H
 
-#include "config.h"
+#include "OTA_WebConfig.h" // For OTAConfig definition
 
 
 // Returns the HTML form as a String
@@ -22,7 +26,7 @@ inline String htmlForm() {
 <head>
   <meta charset="UTF-8">
   <title>)rawliteral";
-  form += String(APPNAME);
+  form += String(config.appname); // Use appname as title
   form += R"rawliteral(</title>
   <style>
     body {
@@ -90,10 +94,12 @@ inline String htmlForm() {
 </head>
 <body>
   <div class="form-frame">
-    <h1 style="text-align:center;">Configuration</h1>
-    <h1 style="text-align:center; color:#003366; font-size:1.5em; margin-top:-10px; margin-bottom:24px;">)rawliteral";
-  form += String(APPNAME);
+    <h1 style="text-align:center;">)rawliteral";
+  form += String(config.appname); // Use appname as main heading
   form += R"rawliteral(</h1>
+    <h2 style="text-align:center; color:#003366; font-size:1.2em; margin-top:-10px; margin-bottom:24px;">)rawliteral";
+  form += String(config.firmware_vers); // Firmware version as subtitle
+  form += R"rawliteral(</h2>
     <div style="text-align:center; margin-bottom:20px;">
       <textarea readonly 
         style="width:100%;text-align:center;
@@ -107,7 +113,7 @@ inline String htmlForm() {
                resize:none;"
         rows="3"
         >)rawliteral";
-  form += String(DESCRIPTION);
+  form += String(config.description); // Use description
   form += R"rawliteral(</textarea>
     </div>
     <form action="/ota/set" method="POST">
@@ -139,7 +145,7 @@ inline String htmlForm() {
         <tr>
           <td class="label"><label for="otaTemplateVersion">OTA Template Version:</label></td>
           <td class="input"><input type="text" id="otaTemplateVersion" name="otaTemplateVersion" value=")rawliteral";
-  form += String(OTA_VERSION);
+  form += String(OTA_CONFIG_VERSION);
   form += R"rawliteral(" readonly></td>
         </tr>
         <tr>
@@ -164,13 +170,13 @@ inline String htmlForm() {
         <tr>
           <td class="label">Firmware Name:</td>
           <td class="input"><b>)rawliteral";
-  form += String(FIRMWARE_NAME);
+  form += String(config.firmware_name); // Use config.ssid as firmware name (or another attribute if you have one)
   form += R"rawliteral(</b></td>
         </tr>
         <tr>
           <td class="label">Firmware Version:</td>
           <td class="input"><b>)rawliteral";
-  form += String(config.version);
+  form += String(config.firmware_vers);
   form += R"rawliteral(</b></td>
         </tr>
         <tr>
@@ -181,6 +187,12 @@ inline String htmlForm() {
           <td class="label"><label for="webServerPort">Web Server Port:</label></td>
           <td class="input"><input type="number" id="webServerPort" name="webServerPort" min="1" max="65535" value=")rawliteral";
   form += String(config.webServerPort);
+  form += R"rawliteral("></td>
+        </tr>
+        <tr>
+          <td class="label"><label for="firmware_name">Firmware File:</label></td>
+          <td class="input"><input type="text" id="firmware_name" name="firmware_name" value=")rawliteral";
+  form += String(config.firmware_name);
   form += R"rawliteral("></td>
         </tr>
         <tr>
