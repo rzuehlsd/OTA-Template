@@ -1,4 +1,4 @@
-/**
+/*
  * ota-server.js
  *
  * This file implements a simple OTA (Over-the-Air) Update Server for ESP8266/ESP32 devices using Node.js and Express.
@@ -18,8 +18,25 @@
  * 2. Start the server with: node ota-server.js
  * 3. Configure your ESP8266/ESP32 devices to use this server for OTA updates.
  *
+ *
  * Author: R. Zuehlsdorff
+ * Copyright 2025
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
 
 const express = require('express');
 const fs = require('fs');
@@ -101,7 +118,7 @@ app.get('/version/:filename', (req, res) => {
 });
 
 // --- Server Startup ---
-
+// listen to all interfaces on the specified port
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`OTA Update Server running at http://localhost:${PORT}`);
   console.log(`Firmware directory: ${UPDATES_DIR}`);

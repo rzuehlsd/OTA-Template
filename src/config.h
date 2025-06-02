@@ -8,6 +8,24 @@
  * Here you define the default SSID, WiFi password, OTA server address,
  * firmware version, EEPROM size, and other global parameters.
  * Changes to these values affect the entire project.
+ * 
+ *
+ * Author: R. Zuehlsdorff
+ * Copyright 2025
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef CONFIG_H
@@ -17,13 +35,13 @@
 /*
 **  WiFi Configuration Details  
 */
-#define APSSID "RZHome"                // Default WiFi SSID used for initial connection or reset
-#define APPSK "7895350500384967"       // Default WiFi password used for initial connection or reset
+#define APSSID "your ssid"                // Default WiFi SSID used for initial connection or reset
+#define APPSK "you key"       // Default WiFi password used for initial connection or reset
 
 /*
 **  OTA Server Configuration Details  
 */
-#define OTA_SERVER "192.168.2.198"     // OTA server IP or hostname for firmware updates
+#define OTA_SERVER "your IP"     // OTA server IP or hostname for firmware updates
 #define OTA_VERSION "1.0.0.0"          // Version number of the OTA template (not firmware)
 #define OTA_PORT 3000                  // Port number used to connect to the OTA server
 #define OTA_UPDATE_INTERVAL 60         // Interval (in minutes) to check for OTA updates

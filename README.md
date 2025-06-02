@@ -198,7 +198,7 @@ registerCustomEndpoint("/hello", []() {
 
 ## License
 
-MIT License
+GNU Lesser General Public License (LGPL)
 
 ---
 
