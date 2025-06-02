@@ -16,7 +16,7 @@ def package_arduino(lib_name="OTA_Template"):
     examples_src = "src"
     examples_dst = "OTA_Test"
     examples_dir = "examples"
-    output_zip = lib_name + ".zip"
+    output_zip = lib_name + "Lib" + ".zip"
 
     # Create temp directory and required structure
     temp_dir = tempfile.mkdtemp()
@@ -48,7 +48,11 @@ def package_arduino(lib_name="OTA_Template"):
         os.remove(output_zip)
 
     # Zip the library folder (so the zip contains OTA_Template/...)
-    shutil.make_archive(lib_name, 'zip', temp_dir, lib_name)
+    temp_zip = shutil.make_archive(lib_name, 'zip', temp_dir, lib_name)
+
+    # Rename the zip to match output_zip if needed
+    if temp_zip != output_zip:
+        os.replace(temp_zip, output_zip)
 
     # Clean up temp dir
     shutil.rmtree(temp_dir)
