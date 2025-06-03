@@ -9,13 +9,12 @@ def package_arduino(lib_name="OTA_Template"):
     - Creates a temp directory with the correct folder structure
     - Copies config.h and OTA_Test.cpp to examples/OTA_Test, renaming OTA_Test.cpp to OTA_Test.ino
     - Copies all .cpp and .h files from src to tempdir/src
-    - Copies library.properties and README.md if they exist
-    - Zips the tempdir as OTA_Template.zip
+    - Copies OTA-Server folder, library.properties and README.md if they exist
+    - Zips the tempdir as OTA_TemplateLib.zip
     """
     src_dir = "src"
     examples_src = "src"
     examples_dst = "OTA_Test"
-    examples_dir = "examples"
     output_zip = lib_name + "Lib" + ".zip"
 
     # Create temp directory and required structure
@@ -38,6 +37,12 @@ def package_arduino(lib_name="OTA_Template"):
             if file not in ["OTA_Test.cpp", "config.h"]:
                 shutil.copy(os.path.join(src_dir, file), os.path.join(lib_dir, "src", file))
 
+    # Copy OTA-Server folder if it exists
+    ota_server_src = "OTA-Server"
+    ota_server_dst = os.path.join(lib_dir, "OTA-Server")
+    if os.path.exists(ota_server_src) and os.path.isdir(ota_server_src):
+        shutil.copytree(ota_server_src, ota_server_dst)
+
     # Copy library.properties and README.md if they exist
     for extra in ["library.properties", "README.md"]:
         if os.path.exists(extra):
@@ -57,7 +62,7 @@ def package_arduino(lib_name="OTA_Template"):
     # Clean up temp dir
     shutil.rmtree(temp_dir)
 
-    print(f"Created {output_zip} for Arduino IDE (with correct folder structure).")
+    print(f"Created {output_zip} for Arduino IDE (with correct folder structure and OTA-Server included).")
 
 if __name__ == "__main__":
     package_arduino()
