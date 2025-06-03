@@ -133,7 +133,7 @@ OTAServer/
 - The ESP device periodically checks the OTA server for a new firmware version.
 - It compares its defined version number with the version number found in the version file on the OTA server. 
   If a newer version is found, it downloads `firmware.bin` and updates itself.
-  The version numbereing schema has to be "n1.n2.n3.n4", e.g. "0.9.0.8" or "1.2.0.5". Here the second example 
+  The version numbering schema has to be "n1.n2.n3.n4", e.g. "0.9.0.8" or "1.2.0.5". Here the second example 
   is "greater", hence newer than the first, which will trigger an OTA update.
   The compare function is located in OTA_Template.cpp and can be changed if needed.
 - Be aware that the configuration settings stored in EEPROM will not be cleared during the update! 
